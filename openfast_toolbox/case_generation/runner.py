@@ -113,7 +113,8 @@ def run_cmd(input_file_or_arglist, exe, wait=True, showOutputs=False, showComman
         print('Running: '+' '.join(args))
     if wait:
         class Dummy():
-            pass
+            def wait(self):
+                return None
         p=Dummy()
         p.returncode=subprocess.call(args , stdout=STDOut, stderr=subprocess.STDOUT, shell=shell)
     else:

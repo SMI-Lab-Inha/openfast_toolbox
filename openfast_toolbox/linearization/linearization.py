@@ -28,6 +28,7 @@ def defaultFilenames(OP, rpmSweep=None):
  
 """
 import os, glob
+import shutil
 import pandas as pd
 import numpy as np
 from openfast_toolbox.linearization.campbell import postproCampbell, plotCampbell
@@ -205,6 +206,15 @@ def writeLinearizationFiles(main_fst, workDir, operatingPointsFile,
        - list of fst files created
     """
 
+    def _ad_wake_mod(ad):
+        if ad is None:
+            return None
+        if 'Wake_Mod' in ad.keys():
+            return ad['Wake_Mod']
+        if 'WakeMod' in ad.keys():
+            return ad['WakeMod']
+        return None
+
     # --- Optional values
     if baseDict is None:
         baseDict=dict()
@@ -253,8 +263,10 @@ def writeLinearizationFiles(main_fst, workDir, operatingPointsFile,
         viz=False
         print('[WARN] Deactivating VTK vizualization since not available in this version of OpenFAST')
 
+    wake_mod = _ad_wake_mod(AD)
+
     if AD is not None:
-        if AD['WakeMod']==2 and AD['DBEMT_Mod'] in [1,3]:
+        if wake_mod == 2 and AD['DBEMT_Mod'] in [1,3]:
             if 'a_bar_[-]' not in OP.keys():
                 print('[WARN] Axial induction `a` not present in Operating point file, but DBEMT needs `tau1_constant`. Provide this column, or make sure your value of `tau1_const` is valid')
 
@@ -355,7 +367,7 @@ def writeLinearizationFiles(main_fst, workDir, operatingPointsFile,
             linDict['WrVTK']        = 0
         # --- Aero options
         if fst['CompAero']>0:
-            if AD['WakeMod']==2 and AD['DBEMT_Mod'] in [1,3]:
+            if wake_mod == 2 and AD['DBEMT_Mod'] in [1,3]:
                 if 'a_bar_[-]' in OP.keys():
                     a_bar= op['a_bar_[-]']
                     linDict['AeroFile|tau1_const'] = np.around(1.1/(1-1.3*min(a_bar,0.5))*BladeLen/ws, 3)
@@ -390,6 +402,21 @@ def writeLinearizationFiles(main_fst, workDir, operatingPointsFile,
     refDir    = os.path.dirname(main_fst)
     main_file = os.path.basename(main_fst)
     fastfiles = templateReplace(PARAMS,refDir,outputDir=workDir,removeRefSubFiles=True,main_file=main_file)
+
+    # Preserve the template AeroDyn file when no AeroDyn parameters are being changed.
+    # The generic FASTInputFile writer currently drops some OpenFAST v5-only AeroDyn fields
+    # such as `CompAA`, which makes the regenerated file invalid for OpenFAST v5.
+    aero_keys_used = [
+        key
+        for p in PARAMS
+        for key in p.keys()
+        if key.startswith('AeroFile|')
+    ]
+    if fst['CompAero'] > 0 and len(aero_keys_used) == 0:
+        src_aero = os.path.join(refDir, fst['AeroFile'].strip('"'))
+        dst_aero = os.path.join(workDir, fst['AeroFile'].strip('"'))
+        if os.path.exists(src_aero):
+            shutil.copyfile(src_aero, dst_aero)
 
     return fastfiles
 
