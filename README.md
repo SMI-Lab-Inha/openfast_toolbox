@@ -16,6 +16,24 @@ python -m pip install -e .
 pytest
 ```
 
+## Student setup
+
+If this repository is being used in a course or lab setting, use the provided reproducible environment files instead of installing packages one by one.
+
+- Conda environment file: [`environment.yml`](environment.yml)
+- Student guide: [`STUDENT_SETUP.md`](STUDENT_SETUP.md)
+- PowerShell setup helper: [`scripts/setup_student_env.ps1`](scripts/setup_student_env.ps1)
+
+Recommended student workflow:
+
+```powershell
+git clone https://github.com/SMI-Lab-Inha/openfast_toolbox.git
+cd openfast_toolbox
+conda env create -f environment.yml
+conda activate openfast-toolbox-env
+python -m pip install -e .
+```
+
 
 
 ## Subpackages

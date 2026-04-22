@@ -1,0 +1,19 @@
+name: openfast-toolbox-env
+channels:
+  - conda-forge
+dependencies:
+  - python=3.10
+  - pip
+  - ipykernel
+  - notebook
+  - jupyterlab
+  - matplotlib
+  - openpyxl
+  - numpy
+  - pandas
+  - pyarrow
+  - scipy
+  - chardet
+  - xarray
+  - pytest
+  - dill
